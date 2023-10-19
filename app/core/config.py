@@ -1,6 +1,6 @@
-from pydantic import BaseSettings
 from typing import Optional
 
+from pydantic import BaseSettings
 
 MAX_SYM_NAME = 100
 MAX_NAME_IN_REPR = 6
