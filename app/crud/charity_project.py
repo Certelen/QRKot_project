@@ -10,7 +10,7 @@ from app.models.charity_project import CharityProject
 
 class CRUDProject(CRUDBase):
 
-    async def get_projects_by_completion_rate(
+    async def get_close_projects(
             self,
             session: AsyncSession,
     ) -> Optional[list[DateInvestModel]]:
@@ -21,10 +21,7 @@ class CRUDProject(CRUDBase):
                 self.model.fully_invested == 1
             )
         )
-        return sorted(
-            close_projects.scalars().all(),
-            key=lambda project: project.create_date - project.close_date,
-            reverse=True)
+        return close_projects.scalars().all()
 
 
 project_crud = CRUDProject(CharityProject)

@@ -23,33 +23,18 @@ async def get_report(
         wrapper_services: Aiogoogle = Depends(get_service)
 
 ):
-    try:
-        spreadsheet_id, spreadsheet_url = await spreadsheets_create(
-            wrapper_services)
-    except Exception as error:
-        print(error)
-        raise HTTPException(
-            status_code=HTTPStatus.BAD_REQUEST,
-            detail='Ошибка при создании отчета!',
-        )
-    try:
-        await set_user_permissions(
-            spreadsheet_id, wrapper_services)
-    except Exception as error:
-        print(error)
-        raise HTTPException(
-            status_code=HTTPStatus.FORBIDDEN,
-            detail='Превышен лимит по созданию отчетов за короткое время!',
-        )
+    spreadsheet_id, spreadsheet_url = await spreadsheets_create(
+        wrapper_services)
+    await set_user_permissions(
+        spreadsheet_id, wrapper_services)
     try:
         await spreadsheets_update_value(
             spreadsheet_id,
             wrapper_services,
-            await project_crud.get_projects_by_completion_rate(session))
-    except Exception as error:
-        print(error)
+            await project_crud.get_close_projects(session))
+    except ValueError as error:
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
-            detail='Ошибка при внесении данных в отчет!',
+            detail=str(error),
         )
     return f'Ссылка на документ: {spreadsheet_url}'
