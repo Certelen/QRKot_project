@@ -11,8 +11,8 @@ COLUMN_COUNT = 3
 
 SPREADSHEET_BODY = dict(
     properties=dict(
-        title=('Отчет закрытых проектов QRCat от '
-               + datetime.now().strftime(FORMAT)),
+        title=('Отчет закрытых проектов QRCat от ' +
+               datetime.now().strftime(FORMAT)),
         locale='ru_RU',
     ),
     sheets=[dict(properties=dict(
@@ -36,8 +36,8 @@ async def spreadsheets_create(wrapper_services: Aiogoogle) -> str:
     spreadsheets_copy = deepcopy(SPREADSHEET_BODY)
     (spreadsheets_copy
      ['properties']
-     ['title']) = ('Отчет закрытых проектов QRCat от '
-                   + datetime.now().strftime(FORMAT))
+     ['title']) = ('Отчет закрытых проектов QRCat от ' +
+                   datetime.now().strftime(FORMAT))
     spreadsheet = (await wrapper_services.as_service_account(
         (await wrapper_services.discover(
             'sheets', 'v4'
