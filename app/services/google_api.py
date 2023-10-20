@@ -11,22 +11,24 @@ COLUMN_COUNT = 3
 
 SPREADSHEET_BODY = dict(
     properties=dict(
-        title=('Отчет закрытых проектов QRCat от ' +
-               datetime.now().strftime(FORMAT)),
+        title='Отчет закрытых проектов QRCat',
         locale='ru_RU',
     ),
-    sheets=[dict(properties=dict(
-        sheetType='GRID',
-        sheetId=0,
-        title='Лист1',
-        gridProperties=dict(
-            rowCount=ROW_COUNT,
-            columnCount=COLUMN_COUNT
-        ))
-    )])
+    sheets=[dict(
+        properties=dict(
+            sheetType='GRID',
+            sheetId=0,
+            title='Лист1',
+            gridProperties=dict(
+                rowCount=ROW_COUNT,
+                columnCount=COLUMN_COUNT
+            )
+        )
+    )]
+)
 
 SPREADSHEET_TABLE = [
-    ['Отчет от', datetime.now().strftime(FORMAT)],
+    ['Отчет от', ''],
     ['Топ проектов по скорости закрытия'],
     ['Название проекта', 'Время сбора', 'Описание']
 ]
@@ -67,30 +69,40 @@ async def spreadsheets_update_value(
         wrapper_services: Aiogoogle,
         projects: list,
 ) -> None:
+    max_column = 0
     spreadsheets_copy = deepcopy(SPREADSHEET_TABLE)
     spreadsheets_copy[0][1] = datetime.now().strftime(
         FORMAT)
     table_values = [
-        *SPREADSHEET_TABLE,
-        *[list(map(str,
-                   [project.name,
-                    str(project.close_date - project.create_date),
-                    project.description
-                    ])) for project in sorted(
-            projects,
-            key=lambda project: project.create_date - project.close_date,
-            reverse=True)],
+        *spreadsheets_copy,
+        *[
+            list(map(str, [
+                project.name,
+                str(project.close_date - project.create_date),
+                project.description
+            ]))
+            for project in sorted(
+                projects,
+                key=lambda project: project.create_date - project.close_date,
+                reverse=True
+            )
+        ],
     ]
-    if len(table_values) == len(SPREADSHEET_TABLE):
-        raise ValueError('Нет закрытых проектов')
-    if len(table_values) > ROW_COUNT or len(table_values[3]) > COLUMN_COUNT:
-        raise ValueError('Данные больше таблицы')
+    table_values_count = len(table_values)
+    for table_value in table_values:
+        max_column = max(len(table_value), max_column)
+    if max_column > COLUMN_COUNT:
+        raise ValueError(f'Длинна данных ({max_column}) '
+                         f'больше колонок таблицы({COLUMN_COUNT})')
+    if table_values_count > ROW_COUNT:
+        raise ValueError(f'Количество данных ({table_values_count}) '
+                         f'больше колонок таблицы({ROW_COUNT})')
     return (await wrapper_services.as_service_account(
         (await wrapper_services.discover(
             'sheets', 'v4'
         )).spreadsheets.values.update(
             spreadsheetId=spreadsheet_id,
-            range=f'R1C1:R{len(table_values)}C{len(table_values[3])}',
+            range=f'R1C1:R{table_values_count}C{max_column}',
             valueInputOption='USER_ENTERED',
             json={
                 'majorDimension': 'ROWS',
